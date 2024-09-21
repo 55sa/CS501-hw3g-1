@@ -2,6 +2,7 @@ package com.example.hw3g_1
 
 import android.os.Bundle
 import android.view.Surface
+import android.widget.CheckBox
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalMapOf
 import androidx.compose.ui.text.input.TextFieldValue
@@ -44,6 +46,9 @@ fun ListedTasks() {
 
     Column(
         modifier = Modifier.fillMaxSize().padding(14.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+
 
     ){
         TextField(
@@ -113,8 +118,28 @@ fun TaskList(
 
 
 @Composable
-fun TaskRow(task: Task,
-            onCheckedChange: (Boolean) -> Unit  ){
+fun TaskRow(
+    task: Task,
+    onCheckedChange: (Boolean) -> Unit
+){
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)
+    ){
+        CheckBox(
+            checked = task.isCompleted,
+            onCheckedChange = onCheckedChange
+        )
+        Text(
+            text = task.description,
+            modifier = Modifier.padding(start = 10.dp),
+            textDecoration = if(task.isCompleted) TextDecoration.LineThrough else
+            TextDecoration.None
+        )
+    }
+}
+
+fun CheckBox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
 
 }
 
@@ -122,6 +147,6 @@ fun TaskRow(task: Task,
 @Composable
 fun GreetingPreview() {
     Hw3g1Theme {
-      ListedTasks()
+        ListedTasks()
     }
 }
