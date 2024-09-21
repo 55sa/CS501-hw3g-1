@@ -1,26 +1,23 @@
 package com.example.hw3g_1
 
 import android.os.Bundle
-import android.view.Surface
 import android.widget.CheckBox
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalMapOf
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.hw3g_1.ui.theme.Hw3g1Theme
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 
 class MainActivity : ComponentActivity() {
@@ -28,119 +25,128 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Hw3g1Theme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ){
                     ListedTasks()
                 }
             }
         }
     }
-}
+
 
 @Composable
 fun ListedTasks() {
-    var taskDescription by remember{ mutableStateOf(TextFieldValue("")) }
-    var tasks by remember { mutableStateOf(mutableListOf<Task>())}
+    var taskDescription by remember{ mutableStateOf("")}
+    var taskList by remember { mutableStateOf(listOf<Task>())}
 
     Column(
         modifier = Modifier.fillMaxSize().padding(14.dp),
-        verticalArrangement = Arrangement.Top,
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-
-
     ){
-        TextField(
-            value = taskDescription,
-            onValueChange = {taskDescription = it},
-            label = {Text("Please enter your task's description")},
-            modifier = Modifier.fillMaxWidth(),
-            keyboardActions = KeyboardActions(onDone = {
-                if(taskDescription.text.isNotBlank()){
-                    tasks.add(Task(description = taskDescription.text))
-                    taskDescription = TextFieldValue("")
-                }
-            }),
-            singleLine = true
 
+      TaskInputField(
+          taskDescription = taskDescription,
+          onTaskDescriptionChange = {taskDescription = it}
         )
 
-        Button(
+        Spacer(modifier = Modifier.height(10.dp))
+
+        AddTaskButton(
             onClick = {
-                if (taskDescription.text.isNotBlank()) {
-                    tasks.add(Task(description = taskDescription.text))
-                    taskDescription = TextFieldValue("")
+                if (taskDescription.isNotEmpty()) {
+                    taskList = taskList + Task(taskDescription, false)
+                    taskDescription = ""
                 }
-            },
-            modifier = Modifier
-                .padding(vertical = 7.dp)
+            }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        ){
-            Text("Add Task")
+        TaskList(taskList) { updatedTask ->
+            taskList = taskList.map { task ->
+                if (task.description == updatedTask.description) updatedTask else task
+            }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        TaskList(tasks = tasks, onTaskCheckedChange = { task, isChecked -> task.isCompleted = isChecked})
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Button(
+        ClearCompletedButton(
             onClick = {
-                tasks = tasks.filter { !it.isCompleted }.toMutableList()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Text("Clear Completed")
-        }
+                taskList = taskList.filter { !it.isComplete }
+            }
+        )
     }
 }
 
-data class Task(
-    val description: String,
-    var isCompleted: Boolean = false
-)
+data class Task(val description: String, var isComplete: Boolean)
+
+
+@Composable
+fun TaskInputField(taskDescription: String, onTaskDescriptionChange: (String) -> Unit) {
+    TextField(
+        value = taskDescription,
+        onValueChange = onTaskDescriptionChange,
+        label = { Text(text = "Enter Task Description") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun AddTaskButton(onClick: () -> Unit) {
+    Button(onClick = onClick){
+        Text(text = "Add Task")
+    }
+}
+
+@Composable
+fun ClearCompletedButton(onClick: () -> Unit) {
+    Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)){
+        Text(text = "Clear Completed", color = Color.White)
+    }
+}
+
 @Composable
 fun TaskList(
-    tasks: List<Task>,
-    onTaskCheckedChange: (Task, Boolean) -> Unit
+    taskList: List<Task>,
+    onTaskToggle: (Task) -> Unit
 ){
-        Column(
-            modifier = Modifier.fillMaxWidth()) {
-            tasks.forEach { task ->
-                TaskRow(task = task, onCheckedChange = { isChecked ->
-                    onTaskCheckedChange(task, isChecked)
-                })
+    LazyColumn{
+            items(taskList.size){
+                index ->
+                TaskRow(
+                    task = taskList[index],
+                    onTaskToggle = onTaskToggle
+                )
+            }
             }
         }
-    }
 
 
 @Composable
 fun TaskRow(
     task: Task,
-    onCheckedChange: (Boolean) -> Unit
+    onTaskToggle: (Task) -> Unit
 ){
     Row(
+        modifier = Modifier.fillMaxWidth().padding(5.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)
+
     ){
-        CheckBox(
-            checked = task.isCompleted,
-            onCheckedChange = onCheckedChange
+        Checkbox(
+            checked = task.isComplete,
+            onCheckedChange = { isChecked ->
+                onTaskToggle(task.copy(isComplete = isChecked))
+            }
         )
+
+        val textDecoration = if(task.isComplete) TextDecoration.LineThrough else TextDecoration.None
+        val textColor = if(task.isComplete) Color.Gray else Color.Black
+
         Text(
             text = task.description,
-            modifier = Modifier.padding(start = 10.dp),
-            textDecoration = if(task.isCompleted) TextDecoration.LineThrough else
-            TextDecoration.None
-        )
+            color = textColor,
+            textDecoration = textDecoration,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = 8.dp))
     }
-}
-
-fun CheckBox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-
 }
 
 @Preview(showBackground = true)
