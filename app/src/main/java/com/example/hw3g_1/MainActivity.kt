@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.CheckBox
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -60,11 +61,14 @@ fun ListedTasks() {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
+        Card(modifier = Modifier.fillMaxWidth()
+            .weight(1f) // Make the task list take up remaining space but still scrollable
+            .padding(5.dp)){
         TaskList(taskList) { updatedTask ->
             taskList = taskList.map { task ->
                 if (task.description == updatedTask.description) updatedTask else task
             }
-        }
+        }}
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -108,6 +112,9 @@ fun TaskList(
     taskList: List<Task>,
     onTaskToggle: (Task) -> Unit
 ){
+
+
+
     LazyColumn{
             items(taskList.size){
                 index ->
@@ -116,8 +123,10 @@ fun TaskList(
                     onTaskToggle = onTaskToggle
                 )
             }
+
             }
-        }
+
+}
 
 
 @Composable
